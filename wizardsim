@@ -1,73 +1,96 @@
-local target = getTarget()
-if target then
-    repeat wait()
-        if target:FindFirstChild("HumanoidRootPart") and target:FindFirstChild("Health") and target.Health.Value > 1 then
-            plr.Character.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame + Vector3.new(0, 7.7, 0) 
-            ReplicatedStorage.Remote.CastSpell:FireServer(1, target)
-            ReplicatedStorage.Remote.CastSpell:FireServer(2, target)
-        else
-            break
-        end
-    until not target
-end
+getgenv().SecureMode = true
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
--- Casting spells on various enemies in Wizard Simulator
-local enemies = {
-    workspace.Levels.Forest.Enemies.Dummy,
-    workspace.Levels.Forest.Enemies.DummyWarrior,
-    workspace.Levels.Forest.Enemies.DummyWizzard,
-    workspace.Levels.Forest.Enemies.DummyArcher,
-    workspace.Levels.Forest.Enemies.DummySpearman,
-    workspace.Levels.Forest.Enemies.DummyKing,
-    workspace.Levels.City.Enemies.GreenSlime,
-    workspace.Levels.City.Enemies.BigSlime,
-    workspace.Levels.City.Enemies.Spider,
-    workspace.Levels.City.Enemies.GiantSpider,
-    workspace.Levels.City.Enemies.Wolf,
-    workspace.Levels.City.Enemies.Werewolf,
-    workspace.Levels.City.Enemies.Bear,
-    workspace.Levels.City.Enemies.StoneGolem,
-    workspace.BossArenas.Lumberjack.Enemies.Lumberjack,
-    workspace.BossArenas.Lumberjack.Enemies.GiantWerewolf,
-    workspace.Levels.Beach.Enemies.BeachCrab,
-    workspace.Levels.Beach.Enemies.Clam,
-    workspace.Levels.Beach.Enemies.RockCrab,
-    workspace.Levels.Sea.Enemies.Jellyfish,
-    workspace.Levels.Sea.Enemies.IceJellyfish,
-    workspace.Levels.Beach.Enemies.GreenPirate,
-    workspace.Levels.Beach.Enemies.RedPirate,
-    workspace.BossArenas.WaterGolem.Enemies.WaterGolem,
-    workspace.BossArenas.KingPirate.Enemies.KingPirate,
-    workspace.Levels.Magma.Enemies.MagmaSlime,
-    workspace.Levels.Magma.Enemies.MagmaCrab,
-    workspace.Levels.Magma.Enemies.FireAnt,
-    workspace.Levels.Magma.Enemies.GiantFireAnt,
-    workspace.Levels.Magma.Enemies.MagmaScorpion,
-    workspace.Levels.Magma.Enemies.Worm,
-    workspace.Levels.Magma.Enemies.MagmaSpider,
-    workspace.BossArenas.MagmaGolem.Enemies.MagmaGolem,
-    workspace.BossArenas.MagmaKing.Enemies.MagmaKing,
-    workspace.Levels.Castle.Enemies.DummyKnight,
-    workspace.Levels.Castle.Enemies.DummyArcher2,
-    workspace.Levels.Castle.Enemies.DummySpearman2,
-    workspace.Levels.Castle.Enemies.SmallTreant,
-    workspace.Levels.Castle.Enemies.Treant,
-    workspace.Levels.Castle.Enemies.SmallWasp,
-    workspace.Levels.Castle.Enemies.Wasp,
-    workspace.Levels.DeepForest.Enemies.RockScorpion,
-    workspace.Levels.DeepForest.Enemies.RockTitan,
-    workspace.Levels.CandyLand.Enemies.SmallJello,
-    workspace.Levels.CandyLand.Enemies.Cupcake,
-    workspace.Levels.CandyLand.Enemies.Donut,
-    workspace.Levels.CandyLand.Enemies.BigJello,
-    workspace.Levels.CandyLand.Enemies.CandyGolem,
-    workspace.Effects.GummyWorm,
-    workspace.Levels.CandyLand.Enemies.GingerbreadSoldier,
-    workspace.Levels.CandyLand.Enemies.GingerbreadWizard,
-    workspace.BossArenas.CandyChomper.Enemies.StaticWaypoint
+local Player = game:GetService("Players").LocalPlayer
+local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local AutoFarmToggle = false
+local AutoQuestToggle = false
+local AutoFarmEnemyOptions = {
+    ["Dummy"] = "[1] Training Dummy",
+    ["DummyWarrior"] = "[3] Dummy Warrior",
+    -- Add more enemies as needed
 }
+local AutoFarmEnemies = {"Dummy"} -- Add or change enemies as needed
+local SpellState = 1
+local QuestToAuto = "CJ:4"
 
-for _, enemy in pairs(enemies) do
-    local args = { [1] = 1, [2] = enemy }
-    game:GetService("ReplicatedStorage").Remote.CastSpell:FireServer(unpack(args))
-end
+-- Rayfield Window
+local Window = Rayfield:CreateWindow({
+    Name = "AutoFarm GUI",
+    LoadingTitle = "Loading",
+    LoadingSubtitle = "by SPDM",
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = "AutoFarmGUI",
+        FileName = "config"
+    }
+})
+
+-- Auto Farm Tab
+local AutoFarmTab = Window:CreateTab("Auto Farm")
+
+local AutoFarmToggle1 = AutoFarmTab:CreateToggle({
+    Name = "Auto Farm",
+    CurrentValue = false,
+    Callback = function(Value)
+        AutoFarmToggle = Value
+    end,
+})
+
+local AutoFarmDropdown = AutoFarmTab:CreateDropdown({
+    Name = "Select Enemy",
+    Options = {"[1] Training Dummy", "[3] Dummy Warrior"},
+    CurrentOption = "[1] Training Dummy",
+    Callback = function(Option)
+        AutoFarmEnemies = {Option}
+    end,
+})
+
+-- Auto Quest Tab
+local QuestTab = Window:CreateTab("Auto Quest")
+
+local AutoQuestToggle1 = QuestTab:CreateToggle({
+    Name = "Auto Quest",
+    CurrentValue = false,
+    Callback = function(Value)
+        AutoQuestToggle = Value
+    end,
+})
+
+local QuestDropdown = QuestTab:CreateDropdown({
+    Name = "Select Quest",
+    Options = {"CJ:4"}, -- Add more quests as needed
+    CurrentOption = "CJ:4",
+    Callback = function(Option)
+        QuestToAuto = Option
+    end,
+})
+
+-- Farming Functionality
+spawn(function()
+    while wait(2) do
+        if AutoFarmToggle then
+            for _, enemyName in pairs(AutoFarmEnemies) do
+                local enemies = Workspace:FindFirstChild("Enemies")
+                if enemies then
+                    for _, enemy in pairs(enemies:GetChildren()) do
+                        if enemy.Name == enemyName then
+                            ReplicatedStorage.Remote.CastSpell:FireServer(SpellState, enemy)
+                            SpellState = SpellState == 1 and 2 or 1
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- Auto Quest Functionality
+spawn(function()
+    while wait(1) do
+        if AutoQuestToggle then
+            ReplicatedStorage.Remote.AcceptQuest:FireServer(QuestToAuto)
+        end
+    end
+end)
