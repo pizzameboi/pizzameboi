@@ -1,4 +1,13 @@
-local npcs = {
+local startlevel
+local ches = 1
+local Del
+local plr = game:GetService("Players").LocalPlayer
+local workspace = game:GetService("Workspace")
+local find = workspace.Levels
+CandyTarg = ""
+lvl = plr.Level.Value
+
+local localNpcs = { 
     workspace.Levels.Forest.Enemies.Dummy,
     workspace.Levels.Forest.Enemies.DummyWarrior,
     workspace.Levels.Forest.Enemies.DummyWizzard,
@@ -53,13 +62,10 @@ local npcs = {
     workspace.BossArenas.CandyChomper.Enemies.StaticWaypoint
 }
 
-while true do
-    for _, npc in ipairs(npcs) do
-        local args = {
-            [1] = 1,
-            [2] = npc
-        }
-        game:GetService("ReplicatedStorage").Remote.CastSpell:FireServer(unpack(args))
-        wait(0.3) -- Delay between each spell
+local getTarget = function()
+    for i,v in next, localNpcs do 
+        if v:FindFirstChild("HumanoidRootPart") and v:FindFirstChild("Health") and v.Health.Value > 1 then
+            return v
+        end
     end
 end
