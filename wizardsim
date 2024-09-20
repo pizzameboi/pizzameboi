@@ -1,26 +1,4 @@
--- Create the GUI
-local ScreenGui = Instance.new("ScreenGui")
-local Frame = Instance.new("Frame")
-local ToggleButton = Instance.new("TextButton")
-
--- Set properties for the GUI elements
-ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-Frame.Parent = ScreenGui
-Frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-Frame.Size = UDim2.new(0, 200, 0, 100)
-Frame.Position = UDim2.new(0.5, -100, 0.5, -50)
-
-ToggleButton.Parent = Frame
-ToggleButton.Size = UDim2.new(0, 180, 0, 50)
-ToggleButton.Position = UDim2.new(0, 10, 0, 25)
-ToggleButton.BackgroundColor3 = Color3.fromRGB(100, 255, 100)
-ToggleButton.Text = "Enable"
-
-local isEnabled = false
-local stopCasting = false
-
--- List of enemies to cast spells on
-local enemies = {
+local npcs = {
     workspace.Levels.Forest.Enemies.Dummy,
     workspace.Levels.Forest.Enemies.DummyWarrior,
     workspace.Levels.Forest.Enemies.DummyWizzard,
@@ -75,35 +53,13 @@ local enemies = {
     workspace.BossArenas.CandyChomper.Enemies.StaticWaypoint
 }
 
--- Function to cast spell on each enemy
-local function castSpells()
-    for _, enemy in pairs(enemies) do
-        if not isEnabled then break end  -- Stop the loop when disabled
+while true do
+    for _, npc in ipairs(npcs) do
         local args = {
             [1] = 1,
-            [2] = enemy
+            [2] = npc
         }
         game:GetService("ReplicatedStorage").Remote.CastSpell:FireServer(unpack(args))
-        wait(0.5) -- Small delay to prevent flooding the server
+        wait(0.3) -- Delay between each spell
     end
 end
-
--- Toggle the spell casting
-ToggleButton.MouseButton1Click:Connect(function()
-    isEnabled = not isEnabled
-    stopCasting = not isEnabled  -- Set flag to stop casting
-
-    if isEnabled then
-        ToggleButton.Text = "Disable"
-        ToggleButton.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
-        
-        -- Start casting spells
-        while isEnabled do
-            castSpells()
-            wait(5) -- Delay between full cycles of casting
-        end
-    else
-        ToggleButton.Text = "Enable"
-        ToggleButton.BackgroundColor3 = Color3.fromRGB(100, 255, 100)
-    end
-end)
