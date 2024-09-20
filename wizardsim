@@ -17,6 +17,7 @@ ToggleButton.BackgroundColor3 = Color3.fromRGB(100, 255, 100)
 ToggleButton.Text = "Enable"
 
 local isEnabled = false
+local stopCasting = false
 
 -- List of enemies to cast spells on
 local enemies = {
@@ -77,6 +78,7 @@ local enemies = {
 -- Function to cast spell on each enemy
 local function castSpells()
     for _, enemy in pairs(enemies) do
+        if not isEnabled then break end  -- Stop the loop when disabled
         local args = {
             [1] = 1,
             [2] = enemy
@@ -89,7 +91,8 @@ end
 -- Toggle the spell casting
 ToggleButton.MouseButton1Click:Connect(function()
     isEnabled = not isEnabled
-    
+    stopCasting = not isEnabled  -- Set flag to stop casting
+
     if isEnabled then
         ToggleButton.Text = "Disable"
         ToggleButton.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
