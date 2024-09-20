@@ -1,9 +1,8 @@
--- Script for Auto Farm GUI and NPC Selector with Raycasting
+-- Enhanced Auto Farm GUI and NPC Selector
 
 -- Variables
 local player = game.Players.LocalPlayer
 local replicatedStorage = game:GetService("ReplicatedStorage")
-local userInputService = game:GetService("UserInputService")
 local npcList = {
     "Dummy", "DummyWarrior", "DummyWizzard", "DummyArcher", "DummySpearman", "DummyKing",
     "GreenSlime", "BigSlime", "Spider", "GiantSpider", "Wolf", "Werewolf", "Bear",
@@ -17,12 +16,13 @@ local npcList = {
 }
 local selectedNPC = "Dummy"
 local autoFarm = false
+local attackSpeed = 1 -- Default attack speed
 
 -- Create GUI
 local ScreenGui = Instance.new("ScreenGui", player.PlayerGui)
 local Frame = Instance.new("Frame", ScreenGui)
 Frame.Position = UDim2.new(0.1, 0, 0.1, 0)
-Frame.Size = UDim2.new(0, 300, 0, 200)
+Frame.Size = UDim2.new(0, 300, 0, 300)
 Frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 
 local npcDropdown = Instance.new("TextButton", Frame)
@@ -35,23 +35,27 @@ autoFarmToggle.Size = UDim2.new(0, 200, 0, 50)
 autoFarmToggle.Position = UDim2.new(0, 50, 0, 120)
 autoFarmToggle.Text = "Auto Farm: OFF"
 
--- Function to attack NPC using raycasting
+local speedSlider = Instance.new("TextButton", Frame)
+speedSlider.Size = UDim2.new(0, 200, 0, 50)
+speedSlider.Position = UDim2.new(0, 50, 0, 190)
+speedSlider.Text = "Attack Speed: 1s"
+
+-- Function to attack NPC
 local function attackNPC()
     while autoFarm do
-        local playerPosition = player.Character.HumanoidRootPart.Position
-        local direction = (workspace.Levels.Forest.Enemies[selectedNPC].Position - playerPosition).unit * 100
-        
-        local ray = Ray.new(playerPosition, direction)
-        local hit, position = workspace:FindPartOnRay(ray, player.Character)
-
-        if hit and hit:IsDescendantOf(workspace.Levels.Forest.Enemies) then
+        local targetNPC = workspace.Levels.Forest.Enemies:FindFirstChild(selectedNPC)
+        if targetNPC then
             local args = {
                 [1] = 1,
-                [2] = workspace.Levels.Forest.Enemies[selectedNPC]
+                [2] = targetNPC
             }
             replicatedStorage.Remote.CastSpell:FireServer(unpack(args))
+            wait(attackSpeed) -- Adjust the wait time based on attack speed
+        else
+            autoFarm = false
+            autoFarmToggle.Text = "Auto Farm: OFF"
+            print("Selected NPC not found!")
         end
-        wait(1) -- Adjust the wait time based on how fast the attacks should happen
     end
 end
 
@@ -60,7 +64,7 @@ npcDropdown.MouseButton1Click:Connect(function()
     local npcFrame = Instance.new("Frame", Frame)
     npcFrame.Size = UDim2.new(0, 200, 0, 200)
     npcFrame.Position = UDim2.new(0, 50, 0, 110)
-    
+
     for i, npc in ipairs(npcList) do
         local npcButton = Instance.new("TextButton", npcFrame)
         npcButton.Size = UDim2.new(0, 200, 0, 20)
@@ -71,6 +75,7 @@ npcDropdown.MouseButton1Click:Connect(function()
             selectedNPC = npc
             npcDropdown.Text = "NPC: " .. npc
             npcFrame:Destroy() -- Remove NPC selection UI
+            print("Selected NPC: " .. selectedNPC)
         end)
     end
 end)
@@ -83,4 +88,10 @@ autoFarmToggle.MouseButton1Click:Connect(function()
     if autoFarm then
         attackNPC()
     end
+end)
+
+-- Attack Speed Slider
+speedSlider.MouseButton1Click:Connect(function()
+    attackSpeed = attackSpeed == 1 and 0.5 or 1 -- Toggle between 1s and 0.5s
+    speedSlider.Text = "Attack Speed: " .. attackSpeed .. "s"
 end)
