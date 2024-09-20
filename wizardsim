@@ -1,157 +1,73 @@
--- Custom Wizard Simulator Script
-local startlevel
-local ches = 1
-local Del
-local plr = game:GetService("Players").LocalPlayer
-local workspace = game:GetService("Workspace")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local target = getTarget()
+if target then
+    repeat wait()
+        if target:FindFirstChild("HumanoidRootPart") and target:FindFirstChild("Health") and target.Health.Value > 1 then
+            plr.Character.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame + Vector3.new(0, 7.7, 0) 
+            ReplicatedStorage.Remote.CastSpell:FireServer(1, target)
+            ReplicatedStorage.Remote.CastSpell:FireServer(2, target)
+        else
+            break
+        end
+    until not target
+end
 
-local targetNPCs = {
+-- Casting spells on various enemies in Wizard Simulator
+local enemies = {
     workspace.Levels.Forest.Enemies.Dummy,
     workspace.Levels.Forest.Enemies.DummyWarrior,
     workspace.Levels.Forest.Enemies.DummyWizzard,
-    workspace.BossArenas.KingPirate.Enemies.KingPirate
+    workspace.Levels.Forest.Enemies.DummyArcher,
+    workspace.Levels.Forest.Enemies.DummySpearman,
+    workspace.Levels.Forest.Enemies.DummyKing,
+    workspace.Levels.City.Enemies.GreenSlime,
+    workspace.Levels.City.Enemies.BigSlime,
+    workspace.Levels.City.Enemies.Spider,
+    workspace.Levels.City.Enemies.GiantSpider,
+    workspace.Levels.City.Enemies.Wolf,
+    workspace.Levels.City.Enemies.Werewolf,
+    workspace.Levels.City.Enemies.Bear,
+    workspace.Levels.City.Enemies.StoneGolem,
+    workspace.BossArenas.Lumberjack.Enemies.Lumberjack,
+    workspace.BossArenas.Lumberjack.Enemies.GiantWerewolf,
+    workspace.Levels.Beach.Enemies.BeachCrab,
+    workspace.Levels.Beach.Enemies.Clam,
+    workspace.Levels.Beach.Enemies.RockCrab,
+    workspace.Levels.Sea.Enemies.Jellyfish,
+    workspace.Levels.Sea.Enemies.IceJellyfish,
+    workspace.Levels.Beach.Enemies.GreenPirate,
+    workspace.Levels.Beach.Enemies.RedPirate,
+    workspace.BossArenas.WaterGolem.Enemies.WaterGolem,
+    workspace.BossArenas.KingPirate.Enemies.KingPirate,
+    workspace.Levels.Magma.Enemies.MagmaSlime,
+    workspace.Levels.Magma.Enemies.MagmaCrab,
+    workspace.Levels.Magma.Enemies.FireAnt,
+    workspace.Levels.Magma.Enemies.GiantFireAnt,
+    workspace.Levels.Magma.Enemies.MagmaScorpion,
+    workspace.Levels.Magma.Enemies.Worm,
+    workspace.Levels.Magma.Enemies.MagmaSpider,
+    workspace.BossArenas.MagmaGolem.Enemies.MagmaGolem,
+    workspace.BossArenas.MagmaKing.Enemies.MagmaKing,
+    workspace.Levels.Castle.Enemies.DummyKnight,
+    workspace.Levels.Castle.Enemies.DummyArcher2,
+    workspace.Levels.Castle.Enemies.DummySpearman2,
+    workspace.Levels.Castle.Enemies.SmallTreant,
+    workspace.Levels.Castle.Enemies.Treant,
+    workspace.Levels.Castle.Enemies.SmallWasp,
+    workspace.Levels.Castle.Enemies.Wasp,
+    workspace.Levels.DeepForest.Enemies.RockScorpion,
+    workspace.Levels.DeepForest.Enemies.RockTitan,
+    workspace.Levels.CandyLand.Enemies.SmallJello,
+    workspace.Levels.CandyLand.Enemies.Cupcake,
+    workspace.Levels.CandyLand.Enemies.Donut,
+    workspace.Levels.CandyLand.Enemies.BigJello,
+    workspace.Levels.CandyLand.Enemies.CandyGolem,
+    workspace.Effects.GummyWorm,
+    workspace.Levels.CandyLand.Enemies.GingerbreadSoldier,
+    workspace.Levels.CandyLand.Enemies.GingerbreadWizard,
+    workspace.BossArenas.CandyChomper.Enemies.StaticWaypoint
 }
 
-local GUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/deeeity/mercury-lib/master/src.lua"))()
-
-local myGUI = GUI:Create{
-    Name = "Custom Wizard Simulator",
-    Size = UDim2.fromOffset(850, 400),
-    Theme = GUI.Themes.Dark,
-    Link = "https://github.com/deeeity/mercury-lib"
-}
-
-local MainTab = myGUI:Tab{
-	Name = "Main",
-	Icon = "rbxassetid://2609397568"
-}
-
-local ChestTab = myGUI:Tab{
-	Name = "Chests",
-	Icon = "rbxassetid://953596610"
-}
-
--- Anti AFK
-MainTab:Button{
-	Name = "Anti AFK",
-	Description = "Prevents you from being kicked for AFK",
-	Callback = function()
-        local VirtualUser = game:GetService("VirtualUser")
-        plr.Idled:connect(function()
-            VirtualUser:CaptureController()
-            VirtualUser:ClickButton2(Vector2.new())
-        end)
-        myGUI:Notification{
-            Title = "Alert",
-            Text = "Anti AFK Activated!",
-            Duration = 3
-        }
-    end
-}
-
--- Auto Farm Functionality
-MainTab:Toggle{
-    Name = "Auto Farm",
-    StartingState = false,
-    Description = "Automatically farm selected NPCs",
-    Callback = function(state)
-        _G.Farm = state
-        if state then
-            autoFarm()
-        end
-    end
-}
-
--- Target Selection Dropdown
-MainTab:Dropdown{
-    Name = "Select Target",
-    StartingText = "Choose Target...",
-    Description = "Select your farming target",
-    Items = {
-        {"Forest Dummy", "Dummy"},
-        {"King Pirate", "KingPirate"}
-    },
-    Callback = function(item)
-        _G.SelectedTarget = item
-    end
-}
-
--- Auto Quest Functionality
-MainTab:Toggle{
-    Name = "Auto Quest",
-    StartingState = false,
-    Description = "Automatically complete quests",
-    Callback = function(state)
-        _G.Quest = state
-        if state then
-            autoQuest()
-        end
-    end
-}
-
--- Chest Opening Functionality
-ChestTab:Slider{
-    Name = "Chests to open",
-    Default = 1,
-    Min = 1,
-    Max = 10,
-    Callback = function(v)
-        ches = v
-    end
-}
-
-ChestTab:Button{
-    Name = "Open Chest",
-    Description = "Open selected number of chests",
-    Callback = function()
-        for i = 1, ches do
-            ReplicatedStorage.Remote.OpenPetChest:InvokeServer("Chest1")
-        end
-    end
-}
-
--- Farm function
-function autoFarm()
-    while wait() and _G.Farm do
-        local target = getTarget()
-        if target then
-            repeat wait()
-                if target:FindFirstChild("HumanoidRootPart") and target:FindFirstChild("Health") and target.Health.Value > 1 then
-                    plr.Character.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame + Vector3.new(0, 7.7, 0)
-                    ReplicatedStorage.Remote.CastSpell:FireServer(1, target)
-                    ReplicatedStorage.Remote.CastSpell:FireServer(2, target)
-                else
-                    break
-                end
-            until not target
-        end
-    end
+for _, enemy in pairs(enemies) do
+    local args = { [1] = 1, [2] = enemy }
+    game:GetService("ReplicatedStorage").Remote.CastSpell:FireServer(unpack(args))
 end
-
--- Quest function
-function autoQuest()
-    while wait() and _G.Quest do
-        if _G.SelectedTarget == "Dummy" then
-            ReplicatedStorage.Remote.AcceptQuest:FireServer("CJ:1")
-        elseif _G.SelectedTarget == "KingPirate" then
-            ReplicatedStorage.Remote.AcceptQuest:FireServer("CJ:2")
-        end
-    end
-end
-
--- Target function
-function getTarget()
-    for i, npc in ipairs(targetNPCs) do
-        if npc:FindFirstChild("HumanoidRootPart") and npc:FindFirstChild("Health") and npc.Health.Value > 1 then
-            return npc
-        end
-    end
-end
-
--- Notification on UI load
-myGUI:Notification{
-    Title = "Welcome!",
-    Text = "Custom Wizard Simulator script loaded!",
-    Duration = 5
-}
