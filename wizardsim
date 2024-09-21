@@ -8,12 +8,12 @@ local Window = Rayfield:CreateWindow({
     LoadingSubtitle = "by WaveAI",
     ConfigurationSaving = {
         Enabled = true,
-        FolderName = "AutoFarmConfigs", -- Name of the folder where configs will be saved
+        FolderName = "AutoFarmConfigs", -- Folder where configs will be saved
         FileName = "AutoFarm"
     },
     Discord = {
         Enabled = false,
-        Invite = "discordInviteCode", -- If you want to add a Discord invite
+        Invite = "discordInviteCode", -- Discord invite if needed
         RememberJoins = false
     },
     KeySystem = false -- If you want a key system, set this to true
@@ -30,23 +30,16 @@ local questGroups = {
     ["Candy"] = {"CJ:1", "CJ:2", "CJ:3", "CJ:4", "CJ:5", "CJ:6", "CJ:7", "CJ:8", "CJ:9", "CJ:10", "CJ:11"}
 }
 
--- Function to accept quests from selected group
-local function acceptQuests(groupName)
-    local selectedQuests = questGroups[groupName]
-    if selectedQuests then
-        for _, quest in ipairs(selectedQuests) do
-            local args = { quest }
-            game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer(unpack(args))
-        end
-    else
-        print("Invalid quest group!")
-    end
+-- Function to accept a specific quest
+local function acceptQuest(questId)
+    local args = { questId }
+    game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer(unpack(args))
 end
 
 -- Create a Tab
 local Tab = Window:CreateTab("AutoFarm", 4483362458) -- Icon can be any assetId
 
--- Create sections for each quest group
+-- Sections for each world
 local LumberjackSection = Tab:CreateSection("Lumberjack Quests")
 local BeachSection = Tab:CreateSection("Beach Quests")
 local CastleSection = Tab:CreateSection("Castle Quests")
@@ -55,60 +48,67 @@ local WaterSection = Tab:CreateSection("Water Quests")
 local CandySection = Tab:CreateSection("Candy Quests")
 local OtherSection = Tab:CreateSection("Other Quests")
 
--- Add buttons for each quest group
-Tab:CreateButton({
-    Name = "Start Lumberjack Quests",
+-- Dropdown for each quest group
+Tab:CreateDropdown({
+    Name = "Select Lumberjack Quest",
     SectionParent = LumberjackSection,
-    Callback = function()
-        acceptQuests("Lumberjack")
+    Options = questGroups["Lumberjack"],
+    Callback = function(selectedQuest)
+        acceptQuest(selectedQuest)
     end
 })
 
-Tab:CreateButton({
-    Name = "Start Beach Quests",
+Tab:CreateDropdown({
+    Name = "Select Beach Quest",
     SectionParent = BeachSection,
-    Callback = function()
-        acceptQuests("Beach")
+    Options = questGroups["Beach"],
+    Callback = function(selectedQuest)
+        acceptQuest(selectedQuest)
     end
 })
 
-Tab:CreateButton({
-    Name = "Start Castle Quests",
+Tab:CreateDropdown({
+    Name = "Select Castle Quest",
     SectionParent = CastleSection,
-    Callback = function()
-        acceptQuests("Castle")
+    Options = questGroups["Castle"],
+    Callback = function(selectedQuest)
+        acceptQuest(selectedQuest)
     end
 })
 
-Tab:CreateButton({
-    Name = "Start Lava Quests",
+Tab:CreateDropdown({
+    Name = "Select Lava Quest",
     SectionParent = LavaSection,
-    Callback = function()
-        acceptQuests("Lava")
+    Options = questGroups["Lava"],
+    Callback = function(selectedQuest)
+        acceptQuest(selectedQuest)
     end
 })
 
-Tab:CreateButton({
-    Name = "Start Water Quests",
+Tab:CreateDropdown({
+    Name = "Select Water Quest",
     SectionParent = WaterSection,
-    Callback = function()
-        acceptQuests("Water")
+    Options = questGroups["Water"],
+    Callback = function(selectedQuest)
+        acceptQuest(selectedQuest)
     end
 })
 
-Tab:CreateButton({
-    Name = "Start Candy Quests",
+Tab:CreateDropdown({
+    Name = "Select Candy Quest",
     SectionParent = CandySection,
-    Callback = function()
-        acceptQuests("Candy")
+    Options = questGroups["Candy"],
+    Callback = function(selectedQuest)
+        acceptQuest(selectedQuest)
     end
 })
 
-Tab:CreateButton({
-    Name = "Start Other Quests",
+Tab:CreateDropdown({
+    Name = "Select Other Quest",
     SectionParent = OtherSection,
-    Callback = function()
-        acceptQuests("Other")
+    Options = questGroups["Other"],
+    Callback = function(selectedQuest)
+        acceptQuest(selectedQuest)
     end
 })
 
