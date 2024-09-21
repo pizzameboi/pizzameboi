@@ -1,72 +1,114 @@
--- Create a simple GUI for Auto Farm and Auto Quest
-local ScreenGui = Instance.new("ScreenGui")
-local AutoFarmToggle = Instance.new("TextButton")
-local AutoQuestToggle = Instance.new("TextButton")
-local CooldownSlider = Instance.new("TextButton")
-local CooldownLabel = Instance.new("TextLabel")
-local Cooldown = 1 -- default cooldown in seconds
+-- Rayfield GUI Setup
+local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
 
--- Setup ScreenGui
-ScreenGui.Parent = game.CoreGui
-ScreenGui.Name = "AutoFarmGUI"
+local Window = Rayfield:CreateWindow({
+    Name = "AutoFarm & AutoQuest GUI",
+    LoadingTitle = "Loading GUI...",
+    LoadingSubtitle = "By WaveAI",
+})
 
--- Auto Farm Button
-AutoFarmToggle.Parent = ScreenGui
-AutoFarmToggle.Position = UDim2.new(0.1, 0, 0.1, 0)
-AutoFarmToggle.Size = UDim2.new(0.2, 0, 0.1, 0)
-AutoFarmToggle.Text = "Toggle Auto Farm"
-AutoFarmToggle.MouseButton1Click:Connect(function()
-    local autofarmEnabled = not autofarmEnabled
-    if autofarmEnabled then
-        AutoFarm()
+-- Variables
+local autofarmEnabled = false
+local autoQuestEnabled = false
+local selectedNPC = "workspace.Levels.Forest.Enemies.Dummy" -- default NPC
+local selectedQuest = "LJ:1" -- default quest
+local Cooldown = 1 -- Default spell cooldown
+
+-- Main Tab
+local Tab = Window:CreateTab("AutoFarm & AutoQuest", 4483362458) -- Icon is optional
+
+-- NPC Selector
+local npcSection = Tab:CreateSection("Select NPC to Farm")
+local NPCDropdown = Tab:CreateDropdown({
+    Name = "Select NPC",
+    Options = {
+        "workspace.Levels.Forest.Enemies.Dummy",
+        "workspace.BossArenas.CandyChomper.Enemies.StaticWaypoint",
+        "workspace.Levels.Magma.Enemies.MagmaSpider"
+        -- Add more NPCs from your autofarm.txt file
+    },
+    Callback = function(npc)
+        selectedNPC = npc
     end
-end)
+})
 
--- Auto Quest Button
-AutoQuestToggle.Parent = ScreenGui
-AutoQuestToggle.Position = UDim2.new(0.1, 0, 0.3, 0)
-AutoQuestToggle.Size = UDim2.new(0.2, 0, 0.1, 0)
-AutoQuestToggle.Text = "Toggle Auto Quest"
-AutoQuestToggle.MouseButton1Click:Connect(function()
-    local autoQuestEnabled = not autoQuestEnabled
-    if autoQuestEnabled then
-        AutoQuest()
+-- Quest Selector
+local questSection = Tab:CreateSection("Select Quest")
+local QuestDropdown = Tab:CreateDropdown({
+    Name = "Select Quest",
+    Options = {
+        "LJ:1", "LJ:2", "BT:1", "BT:2", "CH:1" -- Add more quests from your quest.txt
+    },
+    Callback = function(quest)
+        selectedQuest = quest
     end
-end)
+})
 
 -- Cooldown Slider
-CooldownSlider.Parent = ScreenGui
-CooldownSlider.Position = UDim2.new(0.1, 0, 0.5, 0)
-CooldownSlider.Size = UDim2.new(0.2, 0, 0.1, 0)
-CooldownSlider.Text = "Adjust Cooldown"
-CooldownSlider.MouseButton1Click:Connect(function()
-    Cooldown = Cooldown + 0.1
-    if Cooldown > 5 then Cooldown = 0.5 end -- Cooldown range between 0.5 and 5 seconds
-    CooldownLabel.Text = "Cooldown: " .. Cooldown .. "s"
-end)
+local sliderSection = Tab:CreateSection("Cooldown")
+Tab:CreateSlider({
+    Name = "Adjust Cooldown",
+    Range = {0.5, 5}, -- Cooldown range between 0.5 to 5 seconds
+    Increment = 0.1,
+    Suffix = "Seconds",
+    CurrentValue = 1,
+    Callback = function(value)
+        Cooldown = value
+    end
+})
 
--- Cooldown Label
-CooldownLabel.Parent = ScreenGui
-CooldownLabel.Position = UDim2.new(0.1, 0, 0.6, 0)
-CooldownLabel.Size = UDim2.new(0.2, 0, 0.1, 0)
-CooldownLabel.Text = "Cooldown: 1s"
+-- AutoFarm Toggle Button
+local autofarmSection = Tab:CreateSection("AutoFarm Control")
+Tab:CreateToggle({
+    Name = "Enable AutoFarm",
+    CurrentValue = false,
+    Callback = function(state)
+        autofarmEnabled = state
+        if autofarmEnabled then
+            AutoFarm()
+        end
+    end
+})
 
--- AutoFarm Function
+-- AutoQuest Toggle Button
+Tab:CreateToggle({
+    Name = "Enable AutoQuest",
+    CurrentValue = false,
+    Callback = function(state)
+        autoQuestEnabled = state
+        if autoQuestEnabled then
+            AutoQuest()
+        end
+    end
+})
+
+-- AutoFarm Function with two spell casts
 function AutoFarm()
     while autofarmEnabled do
-        -- Insert autofarm logic here, for example:
-        local args = { [1] = 1, [2] = workspace.Levels.Forest.Enemies.Dummy }
-        game:GetService("ReplicatedStorage").Remote.CastSpell:FireServer(unpack(args))
-        wait(Cooldown) -- use the dynamic cooldown
+        -- First Spell
+        local args1 = { [1] = 1, [2] = selectedNPC }
+        game:GetService("ReplicatedStorage").Remote.CastSpell:FireServer(unpack(args1))
+        
+        -- Second Spell
+        local args2 = { [1] = 2, [2] = selectedNPC }
+        game:GetService("ReplicatedStorage").Remote.CastSpell:FireServer(unpack(args2))
+
+        wait(Cooldown) -- Use the dynamic cooldown
     end
 end
 
 -- AutoQuest Function
 function AutoQuest()
     while autoQuestEnabled do
-        -- Insert auto quest logic here, for example:
-        local args = { [1] = "LJ:1" }
+        local args = { [1] = selectedQuest }
         game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer(unpack(args))
-        wait(1) -- Adjust the wait time if necessary
+        wait(1) -- Adjust wait time if needed
     end
 end
+
+-- Initialization
+Rayfield:Notify({
+    Title = "GUI Loaded",
+    Content = "Select your NPC and Quest to farm.",
+    Duration = 6.5,
+})
