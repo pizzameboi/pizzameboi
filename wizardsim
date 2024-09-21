@@ -1,77 +1,92 @@
--- Script for Auto Farm GUI and NPC Selector
+-- Load Rayfield for the UI
+getgenv().SecureMode = true
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
--- Variables
-local player = game.Players.LocalPlayer
-local replicatedStorage = game:GetService("ReplicatedStorage")
-local npcList = {
-    "Dummy", "DummyWarrior", "DummyWizzard", "DummyArcher", "DummySpearman", "DummyKing",
-    "GreenSlime", "BigSlime", "Spider", "GiantSpider", "Wolf", "Werewolf", "Bear",
-    "StoneGolem", "Lumberjack", "GiantWerewolf", "BeachCrab", "Clam", "RockCrab",
-    "Jellyfish", "IceJellyfish", "GreenPirate", "RedPirate", "WaterGolem", "KingPirate",
-    "MagmaSlime", "MagmaCrab", "FireAnt", "GiantFireAnt", "MagmaScorpion", "Worm",
-    "MagmaSpider", "MagmaGolem", "MagmaKing", "DummyKnight", "DummyArcher2", "DummySpearman2",
-    "SmallTreant", "Treant", "SmallWasp", "Wasp", "RockScorpion", "RockTitan", "SmallJello",
-    "Cupcake", "Donut", "BigJello", "CandyGolem", "GummyWorm", "GingerbreadSoldier", "GingerbreadWizard",
-    "StaticWaypoint"
-}
-local selectedNPC = "Dummy"
-local autoFarm = false
+-- Local variables
+local Player = game:GetService("Players").LocalPlayer
+local Humanoid = Player.Character:WaitForChild("Humanoid")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
--- Create GUI
-local ScreenGui = Instance.new("ScreenGui", player.PlayerGui)
-local Frame = Instance.new("Frame", ScreenGui)
-Frame.Position = UDim2.new(0.1, 0, 0.1, 0)
-Frame.Size = UDim2.new(0, 300, 0, 200)
-Frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+-- Quest and Autofarm settings
+local SelectedQuest = "LJ:1"
+local AutoQuestToggle = false
+local AutoFarmToggle = false
+local SelectedNPC = "Dummy"
 
-local npcDropdown = Instance.new("TextButton", Frame)
-npcDropdown.Size = UDim2.new(0, 200, 0, 50)
-npcDropdown.Position = UDim2.new(0, 50, 0, 50)
-npcDropdown.Text = "Select NPC"
+-- GUI Setup
+local Window = Rayfield:CreateWindow({
+    Name = "Quest & Autofarm",
+    LoadingTitle = "Wave AI",
+    LoadingSubtitle = "by SPDM Team"
+})
 
-local autoFarmToggle = Instance.new("TextButton", Frame)
-autoFarmToggle.Size = UDim2.new(0, 200, 0, 50)
-autoFarmToggle.Position = UDim2.new(0, 50, 0, 120)
-autoFarmToggle.Text = "Auto Farm: OFF"
+-- Quest Tab
+local QuestTab = Window:CreateTab("Quest", nil)
 
--- Function to attack NPC
-local function attackNPC()
-    while autoFarm do
-        local args = {
-            [1] = 1,
-            [2] = workspace.Levels.Forest.Enemies[selectedNPC]
-        }
-        replicatedStorage.Remote.CastSpell:FireServer(unpack(args))
-        wait(1) -- Adjust the wait time based on how fast the attacks should happen
+-- Dropdown for quest selection
+local QuestDropdown = QuestTab:CreateDropdown({
+    Name = "Select Quest",
+    Options = {
+        "LJ:1", "LJ:2", "BT:1", "CH:1", "LP:1", "WS:1", "OM:1", "VB:1", "CJ:1"
+    },
+    CurrentOption = {"LJ:1"},
+    Flag = "QuestDropdown",
+    Callback = function(Option)
+        SelectedQuest = Option[1]
+    end,
+})
+
+-- Auto Quest Toggle
+QuestTab:CreateToggle({
+    Name = "Auto Accept Quest",
+    CurrentValue = false,
+    Flag = "AutoQuestToggle",
+    Callback = function(Value)
+        AutoQuestToggle = Value
+        while AutoQuestToggle do
+            ReplicatedStorage.Remote.AcceptQuest:FireServer(SelectedQuest)
+            wait(5)  -- Adjust delay as needed
+        end
     end
-end
+})
 
--- NPC Dropdown click
-npcDropdown.MouseButton1Click:Connect(function()
-    local npcFrame = Instance.new("Frame", Frame)
-    npcFrame.Size = UDim2.new(0, 200, 0, 200)
-    npcFrame.Position = UDim2.new(0, 50, 0, 110)
-    
-    for i, npc in ipairs(npcList) do
-        local npcButton = Instance.new("TextButton", npcFrame)
-        npcButton.Size = UDim2.new(0, 200, 0, 20)
-        npcButton.Position = UDim2.new(0, 0, 0, (i-1) * 20)
-        npcButton.Text = npc
+-- Autofarm Tab
+local AutoFarmTab = Window:CreateTab("Autofarm", nil)
 
-        npcButton.MouseButton1Click:Connect(function()
-            selectedNPC = npc
-            npcDropdown.Text = "NPC: " .. npc
-            npcFrame:Destroy() -- Remove NPC selection UI
-        end)
+-- Dropdown for NPC selection
+local NPCDropdown = AutoFarmTab:CreateDropdown({
+    Name = "Select NPC to Farm",
+    Options = {
+        "Dummy", "DummyWarrior", "Spider", "Wolf", "Bear", "StoneGolem"
+    },
+    CurrentOption = {"Dummy"},
+    Flag = "NPCDropdown",
+    Callback = function(Option)
+        SelectedNPC = Option[1]
+    end,
+})
+
+-- Auto Farm Toggle
+AutoFarmTab:CreateToggle({
+    Name = "Auto Farm NPC",
+    CurrentValue = false,
+    Flag = "AutoFarmToggle",
+    Callback = function(Value)
+        AutoFarmToggle = Value
+        while AutoFarmToggle do
+            local args = {
+                [1] = 1,  -- Adjust spell ID if needed
+                [2] = workspace.Levels.Forest.Enemies[SelectedNPC]
+            }
+            ReplicatedStorage.Remote.CastSpell:FireServer(unpack(args))
+            wait(2)  -- Adjust delay for farming speed
+        end
     end
-end)
+})
 
--- Auto Farm toggle
-autoFarmToggle.MouseButton1Click:Connect(function()
-    autoFarm = not autoFarm
-    autoFarmToggle.Text = autoFarm and "Auto Farm: ON" or "Auto Farm: OFF"
-
-    if autoFarm then
-        attackNPC()
-    end
-end)
+-- GUI Complete
+Rayfield:Notify({
+    Title = "Quest & Autofarm Script Loaded",
+    Content = "You can now select quests and farm NPCs.",
+    Duration = 5
+})
