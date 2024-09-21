@@ -1,127 +1,54 @@
--- Load Rayfield UI library
-local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
+const fs = require('fs');
+const path = require('path');
+const axios = require('axios');
 
--- Create the UI window
-local Window = Rayfield:CreateWindow({
-    Name = "AutoFarm GUI",
-    LoadingTitle = "Loading AutoFarm",
-    LoadingSubtitle = "by WaveAI",
-    ConfigurationSaving = {
-        Enabled = true,
-        FolderName = "AutoFarmConfigs", -- Folder where configs will be saved
-        FileName = "AutoFarm"
-    },
-    Discord = {
-        Enabled = false,
-        Invite = "discordInviteCode", -- Discord invite if needed
-        RememberJoins = false
-    },
-    KeySystem = false -- If you want a key system, set this to true
-})
+/**
+ * Function to copy a Roblox game and create a download file.
+ *
+ * @param {string} gameId - The ID of the Roblox game to copy.
+ * @param {string} downloadPath - The path where the download file should be saved.
+ * @returns {Promise<void>} A Promise that resolves when the download file is created.
+ */
+async function copyRobloxGame(gameId, downloadPath) {
+    try {
+        // Step 1: Fetch the game details from the Roblox API
+        const gameResponse = await axios.get(`https://api.roblox.com/games/${gameId}`);
+        const gameData = gameResponse.data;
 
--- Define quest groups for auto farming
-local questGroups = {
-    ["Lumberjack"] = {"LJ:1", "LJ:2", "LJ:3", "LJ:4", "LJ:5", "LJ:6", "LJ:7", "LJ:8"},
-    ["Beach"] = {"BT:1", "BT:2", "BT:3", "BT:4", "BT:5", "BT:6", "BT:7", "BT:8", "BT:9"},
-    ["Castle"] = {"CH:1", "CH:2", "CH:3", "CH:4", "CH:5", "CH:6", "CH:7", "CH:8"},
-    ["Lava"] = {"LP:1", "LP:2", "LP:3", "LP:4", "LP:5", "LP:6", "LP:7", "LP:8", "LP:9", "LP:10", "LP:11", "LP:12"},
-    ["Water"] = {"WS:1"},
-    ["Other"] = {"OM:1", "VB:1", "VB:2", "VB:3", "VB:4", "VB:5", "VB:6", "VB:7", "VB:8", "VB:9", "VD:1", "VD:2", "VD:3", "VD:4", "VD:5", "VD:6", "VD:7"},
-    ["Candy"] = {"CJ:1", "CJ:2", "CJ:3", "CJ:4", "CJ:5", "CJ:6", "CJ:7", "CJ:8", "CJ:9", "CJ:10", "CJ:11"}
+        // Step 2: Create the download directory if it doesn't exist
+        if (!fs.existsSync(downloadPath)) {
+            fs.mkdirSync(downloadPath, { recursive: true });
+        }
+
+        // Step 3: Download and save the game scripts
+        const scriptsResponse = await axios.get(`https://api.roblox.com/games/${gameId}/scripts`);
+        const scriptsData = scriptsResponse.data;
+        scriptsData.forEach((script) => {
+            const scriptPath = path.join(downloadPath, `${script.Name}.lua`);
+            fs.writeFileSync(scriptPath, script.Source);
+        });
+
+        // Step 4: Download and save the game models
+        const modelsResponse = await axios.get(`https://api.roblox.com/games/${gameId}/models`);
+        const modelsData = modelsResponse.data;
+        modelsData.forEach((model) => {
+            const modelPath = path.join(downloadPath, `${model.Name}.rbxm`);
+            const modelResponse = await axios.get(model.AssetUrl, { responseType: 'arraybuffer' });
+            fs.writeFileSync(modelPath, modelResponse.data);
+        });
+
+        // Step 5: Create the download file
+        const downloadFilePath = path.join(downloadPath, `${gameData.Name}.rbxl`);
+        const downloadFileContent = `Roblox game download file: ${gameData.Name}\n\nScripts:\n${scriptsData.map((script) => script.Name).join('\n')}\n\nModels:\n${modelsData.map((model) => model.Name).join('\n')}`;
+        fs.writeFileSync(downloadFilePath, downloadFileContent);
+
+        console.log(`Roblox game ${gameData.Name} copied successfully. Download file created at ${downloadFilePath}`);
+    } catch (error) {
+        console.error('An error occurred while copying the Roblox game:', error.message);
+    }
 }
 
--- Function to accept a specific quest
-local function acceptQuest(questId)
-    local args = { questId }
-    game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer(unpack(args))
-end
-
--- Create a Tab
-local Tab = Window:CreateTab("AutoFarm", 4483362458) -- Icon can be any assetId
-
--- Sections for each world
-local LumberjackSection = Tab:CreateSection("Lumberjack Quests")
-local BeachSection = Tab:CreateSection("Beach Quests")
-local CastleSection = Tab:CreateSection("Castle Quests")
-local LavaSection = Tab:CreateSection("Lava Quests")
-local WaterSection = Tab:CreateSection("Water Quests")
-local CandySection = Tab:CreateSection("Candy Quests")
-local OtherSection = Tab:CreateSection("Other Quests")
-
--- Dropdown for each quest group
-Tab:CreateDropdown({
-    Name = "Select Lumberjack Quest",
-    SectionParent = LumberjackSection,
-    Options = questGroups["Lumberjack"],
-    Callback = function(selectedQuest)
-        acceptQuest(selectedQuest)
-    end
-})
-
-Tab:CreateDropdown({
-    Name = "Select Beach Quest",
-    SectionParent = BeachSection,
-    Options = questGroups["Beach"],
-    Callback = function(selectedQuest)
-        acceptQuest(selectedQuest)
-    end
-})
-
-Tab:CreateDropdown({
-    Name = "Select Castle Quest",
-    SectionParent = CastleSection,
-    Options = questGroups["Castle"],
-    Callback = function(selectedQuest)
-        acceptQuest(selectedQuest)
-    end
-})
-
-Tab:CreateDropdown({
-    Name = "Select Lava Quest",
-    SectionParent = LavaSection,
-    Options = questGroups["Lava"],
-    Callback = function(selectedQuest)
-        acceptQuest(selectedQuest)
-    end
-})
-
-Tab:CreateDropdown({
-    Name = "Select Water Quest",
-    SectionParent = WaterSection,
-    Options = questGroups["Water"],
-    Callback = function(selectedQuest)
-        acceptQuest(selectedQuest)
-    end
-})
-
-Tab:CreateDropdown({
-    Name = "Select Candy Quest",
-    SectionParent = CandySection,
-    Options = questGroups["Candy"],
-    Callback = function(selectedQuest)
-        acceptQuest(selectedQuest)
-    end
-})
-
-Tab:CreateDropdown({
-    Name = "Select Other Quest",
-    SectionParent = OtherSection,
-    Options = questGroups["Other"],
-    Callback = function(selectedQuest)
-        acceptQuest(selectedQuest)
-    end
-})
-
--- Notification when UI is loaded
-Rayfield:Notify({
-    Title = "AutoFarm GUI",
-    Content = "Rayfield UI Loaded Successfully",
-    Duration = 5,
-    Image = 4483362458,
-    Actions = { -- Notification button actions
-        Ignore = {
-            Name = "Okay",
-            Callback = function() print("User clicked Okay!") end
-        }
-    }
-})
+// Usage Example
+const gameId = '1234567890'; // Replace with the ID of the Roblox game you want to copy
+const downloadPath = './downloads'; // Replace with the desired download path
+copyRobloxGame(gameId, downloadPath);
