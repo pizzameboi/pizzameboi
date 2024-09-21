@@ -1,114 +1,127 @@
--- Rayfield GUI Setup
+-- Load Rayfield UI library
 local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
 
+-- Create the UI window
 local Window = Rayfield:CreateWindow({
-    Name = "AutoFarm & AutoQuest GUI",
-    LoadingTitle = "Loading GUI...",
-    LoadingSubtitle = "By WaveAI",
-})
-
--- Variables
-local autofarmEnabled = false
-local autoQuestEnabled = false
-local selectedNPC = "workspace.Levels.Forest.Enemies.Dummy" -- default NPC
-local selectedQuest = "LJ:1" -- default quest
-local Cooldown = 1 -- Default spell cooldown
-
--- Main Tab
-local Tab = Window:CreateTab("AutoFarm & AutoQuest", 4483362458) -- Icon is optional
-
--- NPC Selector
-local npcSection = Tab:CreateSection("Select NPC to Farm")
-local NPCDropdown = Tab:CreateDropdown({
-    Name = "Select NPC",
-    Options = {
-        "workspace.Levels.Forest.Enemies.Dummy",
-        "workspace.BossArenas.CandyChomper.Enemies.StaticWaypoint",
-        "workspace.Levels.Magma.Enemies.MagmaSpider"
-        -- Add more NPCs from your autofarm.txt file
+    Name = "AutoFarm GUI",
+    LoadingTitle = "Loading AutoFarm",
+    LoadingSubtitle = "by WaveAI",
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = "AutoFarmConfigs", -- Name of the folder where configs will be saved
+        FileName = "AutoFarm"
     },
-    Callback = function(npc)
-        selectedNPC = npc
-    end
-})
-
--- Quest Selector
-local questSection = Tab:CreateSection("Select Quest")
-local QuestDropdown = Tab:CreateDropdown({
-    Name = "Select Quest",
-    Options = {
-        "LJ:1", "LJ:2", "BT:1", "BT:2", "CH:1" -- Add more quests from your quest.txt
+    Discord = {
+        Enabled = false,
+        Invite = "discordInviteCode", -- If you want to add a Discord invite
+        RememberJoins = false
     },
-    Callback = function(quest)
-        selectedQuest = quest
-    end
+    KeySystem = false -- If you want a key system, set this to true
 })
 
--- Cooldown Slider
-local sliderSection = Tab:CreateSection("Cooldown")
-Tab:CreateSlider({
-    Name = "Adjust Cooldown",
-    Range = {0.5, 5}, -- Cooldown range between 0.5 to 5 seconds
-    Increment = 0.1,
-    Suffix = "Seconds",
-    CurrentValue = 1,
-    Callback = function(value)
-        Cooldown = value
-    end
-})
+-- Define quest groups for auto farming
+local questGroups = {
+    ["Lumberjack"] = {"LJ:1", "LJ:2", "LJ:3", "LJ:4", "LJ:5", "LJ:6", "LJ:7", "LJ:8"},
+    ["Beach"] = {"BT:1", "BT:2", "BT:3", "BT:4", "BT:5", "BT:6", "BT:7", "BT:8", "BT:9"},
+    ["Castle"] = {"CH:1", "CH:2", "CH:3", "CH:4", "CH:5", "CH:6", "CH:7", "CH:8"},
+    ["Lava"] = {"LP:1", "LP:2", "LP:3", "LP:4", "LP:5", "LP:6", "LP:7", "LP:8", "LP:9", "LP:10", "LP:11", "LP:12"},
+    ["Water"] = {"WS:1"},
+    ["Other"] = {"OM:1", "VB:1", "VB:2", "VB:3", "VB:4", "VB:5", "VB:6", "VB:7", "VB:8", "VB:9", "VD:1", "VD:2", "VD:3", "VD:4", "VD:5", "VD:6", "VD:7"},
+    ["Candy"] = {"CJ:1", "CJ:2", "CJ:3", "CJ:4", "CJ:5", "CJ:6", "CJ:7", "CJ:8", "CJ:9", "CJ:10", "CJ:11"}
+}
 
--- AutoFarm Toggle Button
-local autofarmSection = Tab:CreateSection("AutoFarm Control")
-Tab:CreateToggle({
-    Name = "Enable AutoFarm",
-    CurrentValue = false,
-    Callback = function(state)
-        autofarmEnabled = state
-        if autofarmEnabled then
-            AutoFarm()
+-- Function to accept quests from selected group
+local function acceptQuests(groupName)
+    local selectedQuests = questGroups[groupName]
+    if selectedQuests then
+        for _, quest in ipairs(selectedQuests) do
+            local args = { quest }
+            game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer(unpack(args))
         end
-    end
-})
-
--- AutoQuest Toggle Button
-Tab:CreateToggle({
-    Name = "Enable AutoQuest",
-    CurrentValue = false,
-    Callback = function(state)
-        autoQuestEnabled = state
-        if autoQuestEnabled then
-            AutoQuest()
-        end
-    end
-})
-
--- AutoFarm Function with two spell casts
-function AutoFarm()
-    while autofarmEnabled do
-        -- First Spell
-        local args1 = { [1] = 1, [2] = selectedNPC }
-        game:GetService("ReplicatedStorage").Remote.CastSpell:FireServer(unpack(args1))
-        
-        -- Second Spell
-        local args2 = { [1] = 2, [2] = selectedNPC }
-        game:GetService("ReplicatedStorage").Remote.CastSpell:FireServer(unpack(args2))
-
-        wait(Cooldown) -- Use the dynamic cooldown
+    else
+        print("Invalid quest group!")
     end
 end
 
--- AutoQuest Function
-function AutoQuest()
-    while autoQuestEnabled do
-        local args = { [1] = selectedQuest }
-        game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer(unpack(args))
-        wait(1) -- Adjust wait time if needed
-    end
-end
+-- Create a Tab
+local Tab = Window:CreateTab("AutoFarm", 4483362458) -- Icon can be any assetId
 
--- Initialization
+-- Create sections for each quest group
+local LumberjackSection = Tab:CreateSection("Lumberjack Quests")
+local BeachSection = Tab:CreateSection("Beach Quests")
+local CastleSection = Tab:CreateSection("Castle Quests")
+local LavaSection = Tab:CreateSection("Lava Quests")
+local WaterSection = Tab:CreateSection("Water Quests")
+local CandySection = Tab:CreateSection("Candy Quests")
+local OtherSection = Tab:CreateSection("Other Quests")
+
+-- Add buttons for each quest group
+Tab:CreateButton({
+    Name = "Start Lumberjack Quests",
+    SectionParent = LumberjackSection,
+    Callback = function()
+        acceptQuests("Lumberjack")
+    end
+})
+
+Tab:CreateButton({
+    Name = "Start Beach Quests",
+    SectionParent = BeachSection,
+    Callback = function()
+        acceptQuests("Beach")
+    end
+})
+
+Tab:CreateButton({
+    Name = "Start Castle Quests",
+    SectionParent = CastleSection,
+    Callback = function()
+        acceptQuests("Castle")
+    end
+})
+
+Tab:CreateButton({
+    Name = "Start Lava Quests",
+    SectionParent = LavaSection,
+    Callback = function()
+        acceptQuests("Lava")
+    end
+})
+
+Tab:CreateButton({
+    Name = "Start Water Quests",
+    SectionParent = WaterSection,
+    Callback = function()
+        acceptQuests("Water")
+    end
+})
+
+Tab:CreateButton({
+    Name = "Start Candy Quests",
+    SectionParent = CandySection,
+    Callback = function()
+        acceptQuests("Candy")
+    end
+})
+
+Tab:CreateButton({
+    Name = "Start Other Quests",
+    SectionParent = OtherSection,
+    Callback = function()
+        acceptQuests("Other")
+    end
+})
+
+-- Notification when UI is loaded
 Rayfield:Notify({
-    Title = "GUI Loaded",
-    Content = "Select your NPC and Quest to farm.",
-    Duration = 6.5,
+    Title = "AutoFarm GUI",
+    Content = "Rayfield UI Loaded Successfully",
+    Duration = 5,
+    Image = 4483362458,
+    Actions = { -- Notification button actions
+        Ignore = {
+            Name = "Okay",
+            Callback = function() print("User clicked Okay!") end
+        }
+    }
 })
