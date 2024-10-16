@@ -2,26 +2,42 @@ local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local hrp = character:WaitForChild("HumanoidRootPart")
 
--- Function to auto hit a breakable
-local function autoHit(breakable)
-    local args = {
-        [1] = breakable.Name -- Assuming the Name of the object is the required UUID
-    }
-    game:GetService("ReplicatedStorage"):WaitForChild("Packages"):WaitForChild("Knit"):WaitForChild("Services"):WaitForChild("BreakableService"):WaitForChild("RF"):WaitForChild("HitBreakable"):InvokeServer(unpack(args))
+-- Function to auto-hit all breakables
+local function autoHitAll()
+    spawn(function()
+        while true do
+            local breakables = workspace.GameObjects.Breakables:GetChildren()
+            for _, breakable in ipairs(breakables) do
+                if breakable and breakable.Parent then
+                    local args = {
+                        [1] = breakable.Name -- Assuming the Name of the object is the required UUID
+                    }
+                    game:GetService("ReplicatedStorage"):WaitForChild("Packages"):WaitForChild("Knit"):WaitForChild("Services"):WaitForChild("BreakableService"):WaitForChild("RF"):WaitForChild("HitBreakable"):InvokeServer(unpack(args))
+                end
+            end
+            wait(0.05) -- Hit every breakable every 0.05 seconds
+        end
+    end)
 end
 
--- Auto-loop teleport to each breakable and hit it
-spawn(function()
-    while true do
-        local breakables = workspace.GameObjects.Breakables:GetChildren()
-        for _, breakable in ipairs(breakables) do
-            if breakable:IsA("BasePart") and breakable.Parent then
-                -- Teleport to the breakable
-                hrp.CFrame = breakable.CFrame + Vector3.new(0, 5, 0) -- Teleport above the breakable
-                -- Auto-hit the breakable after teleporting
-                autoHit(breakable)
-                wait(0.5) -- Wait 0.5 seconds before teleporting to the next breakable
-            end
+-- Function to teleport all breakables to the player's position
+local function teleportBreakablesToPlayer()
+    local breakables = workspace.GameObjects.Breakables:GetChildren()
+    for _, breakable in ipairs(breakables) do
+        if breakable:IsA("BasePart") and breakable.Parent then
+            -- Teleport the breakable to the player's HumanoidRootPart
+            breakable.CFrame = hrp.CFrame + Vector3.new(math.random(-5, 5), 0, math.random(-5, 5)) -- Random slight offset to avoid overlap
         end
     end
+end
+
+-- Auto-loop to teleport breakables to player and start auto-hitting all breakables
+spawn(function()
+    while true do
+        teleportBreakablesToPlayer() -- Teleport all breakables to player's location
+        wait(0.5) -- Teleport every 0.5 seconds
+    end
 end)
+
+-- Start auto-hitting all breakables
+autoHitAll()
