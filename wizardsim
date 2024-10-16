@@ -23,9 +23,9 @@ spawn(function()
             if breakable:IsA("BasePart") and breakable.Parent then
                 hrp.CFrame = breakable.CFrame + Vector3.new(0, 5, 0) -- Teleport above the breakable
                 autoHit(breakable) -- Start auto-hitting the breakable
-                -- Wait until the breakable is destroyed before moving to the next one
+                -- Wait until the breakable is destroyed before teleporting to the next one
                 while breakable.Parent do
-                    wait(0.1) -- Check every 0.1 seconds
+                    wait(0.1) -- Check every 0.1 seconds if it's still there
                 end
             end
         end
