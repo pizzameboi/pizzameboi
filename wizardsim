@@ -4,29 +4,23 @@ local hrp = character:WaitForChild("HumanoidRootPart")
 
 -- Function to auto hit a breakable
 local function autoHit(breakable)
-    spawn(function()
-        while breakable and breakable.Parent do
-            local args = {
-                [1] = breakable.Name -- Assuming the Name of the object is the required UUID
-            }
-            game:GetService("ReplicatedStorage"):WaitForChild("Packages"):WaitForChild("Knit"):WaitForChild("Services"):WaitForChild("BreakableService"):WaitForChild("RF"):WaitForChild("HitBreakable"):InvokeServer(unpack(args))
-            wait(0.05) -- Wait 0.05 seconds before hitting again
-        end
-    end)
+    local args = {
+        [1] = breakable.Name -- Assuming the Name of the object is the required UUID
+    }
+    game:GetService("ReplicatedStorage"):WaitForChild("Packages"):WaitForChild("Knit"):WaitForChild("Services"):WaitForChild("BreakableService"):WaitForChild("RF"):WaitForChild("HitBreakable"):InvokeServer(unpack(args))
 end
 
--- Auto-loop teleport to each breakable and start auto-hitting it
+-- Auto-loop teleport to each breakable and hit it
 spawn(function()
     while true do
         local breakables = workspace.GameObjects.Breakables:GetChildren()
         for _, breakable in ipairs(breakables) do
             if breakable:IsA("BasePart") and breakable.Parent then
+                -- Teleport to the breakable
                 hrp.CFrame = breakable.CFrame + Vector3.new(0, 5, 0) -- Teleport above the breakable
-                autoHit(breakable) -- Start auto-hitting the breakable
-                -- Wait until the breakable is destroyed before teleporting to the next one
-                while breakable.Parent do
-                    wait(0.1) -- Check every 0.1 seconds if it's still there
-                end
+                -- Auto-hit the breakable after teleporting
+                autoHit(breakable)
+                wait(0.5) -- Wait 0.5 seconds before teleporting to the next breakable
             end
         end
     end
