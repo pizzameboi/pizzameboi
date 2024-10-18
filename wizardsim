@@ -1,12 +1,13 @@
 -- Load Rayfield Library (Make sure it's correctly installed)
 local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
 
--- Variables for Auto Hit
+-- Variables for Auto Hit and Auto Buy
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local hrp = character:WaitForChild("HumanoidRootPart")
 local breakables = workspace.GameObjects.Breakables
 local autoHitEnabled = false
+local autoBuyEnabled = false
 local lastTeleportedBreakable = nil -- Tracks the last breakable you teleported to
 
 -- Function to find the nearest breakable to the player
@@ -58,6 +59,30 @@ local function autoHit()
     end)
 end
 
+-- Function to auto-buy from the merchant
+local function autoBuy()
+    spawn(function()
+        while autoBuyEnabled do
+            local args = {
+                [1] = "Zombie Merchant", -- Merchant name
+                [2] = 5 -- Quantity of item
+            }
+
+            -- Invoke the buy function on the server
+            game:GetService("ReplicatedStorage")
+                :WaitForChild("Packages")
+                :WaitForChild("Knit")
+                :WaitForChild("Services")
+                :WaitForChild("LimitedMerchantService")
+                :WaitForChild("RF")
+                :WaitForChild("BuyItem")
+                :InvokeServer(unpack(args))
+
+            wait(1) -- Adjust the delay between auto-buy attempts as needed
+        end
+    end)
+end
+
 -- Rayfield GUI Setup
 local Window = Rayfield:CreateWindow({
     Name = "ruthie2188 discord script",
@@ -70,11 +95,11 @@ local Window = Rayfield:CreateWindow({
     }
 })
 
-local Tab = Window:CreateTab("Auto Farm", 4483362458) -- Example icon ID
+local TabFarm = Window:CreateTab("Auto Farm", 4483362458) -- Example icon ID
 
--- Button to Toggle Auto Hit On/Off
-Tab:CreateToggle({
-    Name = "Toggle Auto Farm",
+-- Button to Toggle Auto Farm On/Off
+TabFarm:CreateToggle({
+    Name = "Toggle Skeleton Ducks",
     CurrentValue = false,
     Flag = "AutoFarmToggle", -- Saves toggle state
     Callback = function(value)
@@ -85,8 +110,23 @@ Tab:CreateToggle({
     end
 })
 
+local TabBuy = Window:CreateTab("Auto Buy", 4483362458) -- Example icon ID
+
+-- Button to Toggle Auto Buy On/Off
+TabBuy:CreateToggle({
+    Name = "Toggle Auto Buy",
+    CurrentValue = false,
+    Flag = "AutoBuyToggle", -- Saves toggle state
+    Callback = function(value)
+        autoBuyEnabled = value
+        if autoBuyEnabled then
+            autoBuy()
+        end
+    end
+})
+
 Rayfield:Notify({
-    Title = "Auto Farm Tool",
+    Title = "Auto Farm and Auto Buy Tool",
     Content = "Loaded successfully!",
     Duration = 5,
     Image = 4483362458
