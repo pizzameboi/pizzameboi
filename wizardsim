@@ -99,7 +99,7 @@ local TabFarm = Window:CreateTab("Auto Farm", 4483362458) -- Example icon ID
 
 -- Button to Toggle Auto Farm On/Off
 TabFarm:CreateToggle({
-    Name = "Toggle Skeleton Ducks",
+    Name = "Auto Farm",
     CurrentValue = false,
     Flag = "AutoFarmToggle", -- Saves toggle state
     Callback = function(value)
@@ -114,7 +114,7 @@ local TabBuy = Window:CreateTab("Auto Buy", 4483362458) -- Example icon ID
 
 -- Button to Toggle Auto Buy On/Off
 TabBuy:CreateToggle({
-    Name = "Toggle Auto Buy",
+    Name = "Skeleton Ducks",
     CurrentValue = false,
     Flag = "AutoBuyToggle", -- Saves toggle state
     Callback = function(value)
